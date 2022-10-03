@@ -3,49 +3,45 @@ const app = express();
 const bodyParser = require('body-parser');
 const morgan = require('morgan');
 const mongoose = require('mongoose');
+const cors  = require('cors');
+const jwt = require('./helpers/jwt') //dung de ngan chan su dung maf ko co API
+const errorHandler = require('./helpers/error-handler');
+
+
+app.use(cors());
+app.options('*', cors());
+
 
 require('dotenv/config');
 
+
 const api = process.env.API_URL;
+
+const productsRouter = require('./routers/products');
+const usersRouter = require('./routers/users');
+const ordersRouter = require('./routers/orders');
+const categoriesRouter = require('./routers/categories');
+
 
 //Middleware
 app.use(express.json());
 app.use(morgan('tiny'));
+app.use(jwt()); // chuui
 
-const productSchema = mongoose.Schema({
-    name:String,
-    price:Number
-    // countInStock: Number//dem so luong trong kho
-})
-const Product = mongoose.model('Product', productSchema);
+app.use(errorHandler);
 
+//Routers
+app.use(`${api}/products`, productsRouter);
+app.use(`${api}/users`, usersRouter);
+app.use(`${api}/orders`, ordersRouter);
+app.use(`${api}/categories`, categoriesRouter);
+//Models
+const Product = require('./models/product');
+const User = require('./models/user');
+const Order = require('./models/order');
+const Category = require('./models/category');
 
-
-app.get(`${api}/products`, (req, res) => {
-    const product = {
-        id: 1,
-        name: 'Tối đa 30m vuông',
-        price: 120000,
-    }
-    res.send(product);  
-})
-
-app.post(`${api}/products`, (req, res) => {
-    const product = new Product({
-        name: req.body.name,
-        price: req.body.price
-        // countInStock:req.body.countInStock
-    })
-    product.save().then((createProduct=> {
-        res.status(201).json(createProduct)
-    })).catch((err)=>{
-        res.status(500).json({
-            error: err,
-            success:false
-        })
-    })
-})
-
+//connnect
 mongoose.connect(process.env.CONNECTION_STRING, {
     useNewUrlParser: true,
     useUnifiedTopology:true,
