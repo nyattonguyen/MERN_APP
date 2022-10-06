@@ -1,9 +1,13 @@
-const {Category} = require('../models/category');
+const { Category } = require('../models/category');
 const express = require('express');
 
 const router = express.Router();
 
 
+
+router.get('/test', async(req,res) => res.status(200).json({
+    message: 'hello'
+}))
 
 router.get(`/`, async (req, res) => {
     const categoryList =  await Category.find();
@@ -22,16 +26,22 @@ router.get('/:id', async(req, res)=> {
 })
 
 router.post(`/`, async (req, res) => {
-    let category = new Category({
-        name: req.body.name
+    
         // countInStock:req.body.countInStock
-    })
-    category = await category.save();
-
-    if(!category)
-    return res.status(400).send('the category cannot be created!')
-
-    res.send(category);
+        try {
+            let category = new Category({
+                name: req.body.name
+            })
+    
+            category = await category.save();
+        
+            if(!category)
+            return res.status(400).send('the category cannot be created!')
+        
+            res.send(category);
+        } catch (error) {
+            console.log(error)
+        }
 })
 
 

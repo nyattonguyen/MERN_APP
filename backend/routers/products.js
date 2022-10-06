@@ -3,6 +3,9 @@ const {Category} = require('../models/category');
 const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
+const { isAuthenticatedUser } = require('../middleware/auth');
+const errorHandler = require('../utils/errorHandler');
+const { json } = require('express');
 
 
 router.get(`/`, async (req, res) => {
@@ -19,17 +22,18 @@ router.get(`/`, async (req, res) => {
     res.send(productList);  
 })
 
-router.get('/:id', async(req, res)=> {
-    const product = await Product.findById(req.params.id).populate('category');
-    if(!product) {
-        res.status(500).json({message: 'the product with the given ID was not found!'})
-    }
-    res.status(200).send(product);
-})
+// router.get('/:id', async(req, res)=> {
+//     const product = await Product.findById(req.params.id).populate('category');
+//     if(!product) {
+//         res.status(500).json({message: 'the product with the given ID was not found!'})
+//     }
+//     res.status(200).send(product);
+// })
 
 
-router.post(`/`, async (req, res) =>{
+router.post(`/` ,async (req, res) =>{
     const category = await Category.findById(req.body.category);
+
     if(!category) return res.status(400).send('Invalid Category')
 
     let product = new Product({

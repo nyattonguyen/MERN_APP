@@ -1,7 +1,5 @@
 const mongoose = require('mongoose');
 
-
-
 const productSchema = mongoose.Schema({
     name: {
         type:String,
@@ -15,8 +13,8 @@ const productSchema = mongoose.Schema({
         type:String,
         require:true
     },
-    desc:{
-        type:String,
+    desc:{ /* description*/ 
+        type:String, 
         default:''
     },
     category: {
@@ -37,4 +35,4 @@ productSchema.set('toJSON', {
 
 
 
-exports.Product = mongoose.model('Product', productSchema);
+module.exports = mongoose.model('Product', productSchema);

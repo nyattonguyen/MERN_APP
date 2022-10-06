@@ -1,11 +1,17 @@
-const {User} = require('../models/user');
+const User = require('../models/user');
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
+const catchasyncerror = require('../middleware/catchasyncerror');
+const { isAuthenticatedUser } = require('../middleware/auth');
 
 
+
+router.get('/test', async(req,res) => res.status(200).json({
+    message: 'hello'
+}))
 
 router.get(`/`, async (req, res) => {
     const userList =  await User.find().select('-passwordHash');
@@ -43,44 +49,51 @@ router.post(`/`, async (req, res) => {
     res.send(user);
 })
 
-router.post('/login', async (req, res) => {
-    const user = await User.findOne({email: req.body.email})
-    const secret = process.env.secret; 
-    if(!user) {
-        return res.status(400).send('the user not found!');
-    }
-    if(user && bcrypt.compareSync(req.body.password, user.passwordHash)){
-        const token = jwt.sign(
-            {
-                userId: user.id,
-                isAdmin: user.isAdmin
-            },
-            secret,
-            {
-                expiresIn: '1d'
-            }
-
-        )
-         res.status(400).send({ user: user.email, token: token});
-
-    }else {
-        res.status(400).send('password is wrong !');
-    }
-})  
+router.post('/login', catchasyncerror(
+    (async (req, res) => {
+        const user = await User.findOne({email: req.body.email})
+        const secret = process.env.SECRET_KEY_TOKEN; 
+        if(!user) {
+            return res.status(400).send('the user not found!');
+        }
+        if(user && bcrypt.compareSync(req.body.password, user.passwordHash)){
+            const token = jwt.sign(
+                {
+                    userId: user.id,
+                    isAdmin: user.isAdmin
+                },
+                secret,
+                {
+                    expiresIn: '1d'
+                }
+    
+            )
+             res.status(400).send({ user: user.email, token: token});
+    
+        }else {
+            res.status(400).send('password is wrong !');
+        }
+    })
+))  
 
 
 router.post('/register', async (req,res)=>{
+
+    const passwordHash = await bcrypt.hashSync(req.body.password, 10)
+
     let user = new User({
         name: req.body.name,
         email: req.body.email,
-        passwordHash: bcrypt.hashSync(req.body.password, 10),
+        passwordHash,
         street:req.body.street,
         country: req.body.country,
         city:req.body.city,
         phone:req.body.phone,
         isAdmin: req.body.isAdmin
+        // countInStock:req.body.countInStock
     })
     user = await user.save();
+   
 
     if(!user)
     return res.status(400).send('the user cannot be register!')

@@ -11,7 +11,8 @@ const userSchema = mongoose.Schema({
     },
     passwordHash:{
         type: String,
-        require: true
+        require: true,
+        minLength: [8, "Mật khẩu phải lớn hơn 8 chữ"]
     },
     street:{
         type: String,
@@ -44,4 +45,23 @@ userSchema.set('toJSON', {
     virtuals: true,
 });
 
-exports.User = mongoose.model('User', userSchema);
+
+userSchema.pre('save', async function (next) {
+    if (!this.isModified('password')) {
+      next();
+    }
+    this.password = await bcrypt.hash(this.password, 10);
+  });
+userSchema.methods.getJWTToken = function () {
+    return jwt.sign({ id: this._id }, process.env.SECRET_KEY_TOKEN, {
+      expiresIn: process.env.EXPIRES_IN_SECONDS,
+    });
+  };
+  
+
+  userSchema.methods.comparePassword = async function (passwordInput) {
+    return await bcrypt.compare(passwordInput, this.password);
+  };
+
+
+module.exports = mongoose.model('User', userSchema);

@@ -1,7 +1,9 @@
-const {Order} = require('../models/order');
 const express = require('express');
-const { OrderItem } = require('../models/order-item');
+const {Order} = require('../models/order');
+const catchasyncerror = require('../middleware/catchasyncerror');
+const { isAuthenticatedUser } = require('../middleware/auth');
 const router = express.Router();
+
 
 router.get(`/`, async (req, res) =>{
     const orderList = await Order.find().populate('user', 'name').sort({'date': -1});
@@ -12,7 +14,7 @@ router.get(`/`, async (req, res) =>{
     res.send(orderList);
 })
 
-router.get(`/:id`, async (req, res) =>{
+router.get(`/:id`, catchasyncerror(async (req, res) =>{
     const order = await Order.findById(req.params.id)
     .populate('user', 'name')
     .populate({ 
@@ -24,27 +26,27 @@ router.get(`/:id`, async (req, res) =>{
         res.status(500).json({success: false})
     } 
     res.send(order);
-})
+}))
 
-router.post('/', async (req,res)=>{
+router.post('/', isAuthenticatedUser ,async (req,res)=>{ 
+   
+   try {
     const orderItemsIds = req.body.orderItems.map(async orderItem =>{
-        let newOrderItem = new OrderItem({
+       
+        let newOrderItem = await new OrderItem({
             date: orderItem.date,
             hours: orderItem.hours,
             product: orderItem.product
         })
         
         newOrderItem = await newOrderItem.save();
-        return newOrderItem._id;
 
         
     })
-    const orderItemsIdsResolved = await orderItemsIds;
+   
 
-    console.log(orderItemsIdsResolved);  
-
-    let order = new Order({
-        orderItems: orderItemsIdsResolved,
+    let order =await new Order({
+        orderItems: orderItemsIds,
         address: req.body.address,
         name: req.body.name,
         phone: req.body.phone,
@@ -52,12 +54,13 @@ router.post('/', async (req,res)=>{
         totalPrice: req.body.totalPrice,
         user: req.body.user,
     })
-    // order = await order.save();
+    order = await order.save();
 
-    if(!order)
-    return res.status(400).send('the order cannot be created!')
-
-    res.send(order);
+    if(!order) {
+        return new ErrorHandler('Order not found', 404)
+    }} catch (error) {
+        console.log(error)
+   }
 })
 
 
@@ -129,7 +132,7 @@ router.get(`/get/userorders/:userid`, async (req, res) =>{
 
 
 
-module.exports =router;
+module.exports = router;
 
 
 
