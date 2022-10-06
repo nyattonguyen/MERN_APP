@@ -1,52 +1,43 @@
+require('dotenv/config');
 const express = require('express');
-const app = express();
-const bodyParser = require('body-parser');
 const morgan = require('morgan');
 const mongoose = require('mongoose');
 const cors  = require('cors');
-const jwt = require('./helpers/jwt') //dung de ngan chan su dung maf ko co API
-const errorHandler = require('./helpers/error-handler');
+const cookieParser = require('cookie-parser')
+
+const app = express();
+const errorr = require('./middleware/error');
+
+// const authJwt = require('./helpers/jwt');
+// const errorHandler = require('./helpers/error-handler');
+
+const router  = require('./routers')
 
 
-app.use(cors());
-app.options('*', cors());
 
-
-require('dotenv/config');
-
-
-const api = process.env.API_URL;
-
-const productsRouter = require('./routers/products');
-const usersRouter = require('./routers/users');
-const ordersRouter = require('./routers/orders');
-const categoriesRouter = require('./routers/categories');
-
+app.use(cookieParser())
+app.use(cors({
+    origin: '*',
+    credentials: true,
+}));
 
 //Middleware
 app.use(express.json());
 app.use(morgan('tiny'));
-app.use(jwt()); // chuui
-
-app.use(errorHandler);
+app.use(express.urlencoded({ extended: true }))
+//
+// app.use(authJwt());
+// app.use(errorHandler);
 
 //Routers
-app.use(`${api}/products`, productsRouter);
-app.use(`${api}/users`, usersRouter);
-app.use(`${api}/orders`, ordersRouter);
-app.use(`${api}/categories`, categoriesRouter);
+app.use('/api/v1/',router);
+app.use(errorr);
+
 //Models
-const Product = require('./models/product');
-const User = require('./models/user');
-const Order = require('./models/order');
-const Category = require('./models/category');
+
 
 //connnect
-mongoose.connect(process.env.CONNECTION_STRING, {
-    useNewUrlParser: true,
-    useUnifiedTopology:true,
-    dbName:'souji-data'
-})
+mongoose.connect(process.env.CONNECTION_STRING)
 .then(()=>{
     console.log('Database Connection is ready ...')
 })

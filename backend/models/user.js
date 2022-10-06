@@ -1,5 +1,7 @@
 const mongoose = require('mongoose');
 
+const validator = require('validator')
+
 const userSchema = mongoose.Schema({
     name:{
         type: String,
@@ -11,7 +13,8 @@ const userSchema = mongoose.Schema({
     },
     passwordHash:{
         type: String,
-        require: true
+        require: true,
+        
     },
     street:{
         type: String,

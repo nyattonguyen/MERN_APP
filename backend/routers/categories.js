@@ -21,17 +21,21 @@ router.get('/:id', async(req, res)=> {
     res.status(200).send(category);
 })
 
-router.post(`/`, async (req, res) => {
-    let category = new Category({
-        name: req.body.name
-        // countInStock:req.body.countInStock
-    })
-    category = await category.save();
-
-    if(!category)
-    return res.status(400).send('the category cannot be created!')
-
-    res.send(category);
+router.post('/', async (req, res) => {
+    try {
+        let category = new Category({
+            name: req.body.name
+            // countInStock:req.body.countInStock
+        })
+        category = await category.save();
+    
+        if(!category)
+        return res.status(400).send('the category cannot be created!')
+    
+        res.send(category);
+    } catch (error) {
+        console.log(error)
+    }
 })
 
 

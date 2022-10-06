@@ -1,11 +1,11 @@
 const mongoose = require('mongoose');
 
 const orderSchema = mongoose.Schema({
-    orderItems: [{
-         type: mongoose.Schema.Types.ObjectId,
-         ref:'OrderItem',
-         require: true
-    }],
+     orderItems: [{
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'OrderItem',
+          required:true
+      }],
     address:{
          type: String,
          require: true
@@ -51,21 +51,18 @@ Order Example:
 {
     "orderItems" : [
         {
-            "quantity": 3,
-            "product" : "5fcfc406ae79b0a6a90d2585"
-        },
-        {
-            "quantity": 2,
-            "product" : "5fd293c7d3abe7295b1403c4"
+            "date": "23",
+            "hours":"3",
+            "product" : "6337212813a6db01c72bf02d"
         }
+        
     ],
-    "shippingAddress1" : "Flowers Street , 45",
-    "shippingAddress2" : "1-B",
-    "city": "Prague",
-    "zip": "00000",
-    "country": "Czech Republic",
-    "phone": "+420702241333",
-    "user": "5fd51bc7e39ba856244a3b44"
+    "address" : "Flowers Street , 45",
+    "name" : "1-B",
+    "phone": "0123456789",
+    "status": "00000",
+    "totalPrice": "123",
+    "user": "633ceb4ae203a6557744d136"
 }
 
  */
