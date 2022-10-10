@@ -4,6 +4,9 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
+const sendToken = require('../utils/jwtToken')
+const ErrorHandler = require('../utils/errorHandler');
+const catchAsyncError = require('../middleware/catchAsyncError');
 
 
 
@@ -43,30 +46,18 @@ router.post(`/`, async (req, res) => {
     res.send(user);
 })
 
-router.post('/login', async (req, res) => {
+router.post('/login', catchAsyncError(async (req, res,next) => {
     const user = await User.findOne({email: req.body.email})
-    const secret = process.env.SECRET_KEY_TOKEN; 
+
     if(!user) {
         return res.status(400).send('The user not found!');
     }
-    if(user && bcrypt.compareSync(req.body.password, user.passwordHash)){
-        const token = jwt.sign(
-            {
-                userId: user.id,
-                isAdmin: user.isAdmin
-            },
-            secret,
-            {
-                expiresIn: '1d'
-            }
-
-        )
-         res.status(400).send({ user: user.email, token: token});
-
-    }else {
-        res.status(400).send('Password is wrong !');
-    }
-})  
+    
+    const isMatchPassworded = await bcrypt.compareSync(req.body.password, user.passwordHash)
+    console.log(isMatchPassworded)
+    if(!isMatchPassworded) return next(new ErrorHandler("Password or username wrong!!",404))
+     sendToken(user, 200, res)
+}))  
 
 
 router.post('/register', async (req,res)=>{

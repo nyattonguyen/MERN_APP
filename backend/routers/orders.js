@@ -10,6 +10,8 @@ const catchasyncerror = require('../middleware/catchasyncerror');
 const ErrorHandler = require('../utils/errorHandler');
 const { isAuthenticatedUser } = require('../middleware/auth');
 
+
+// lấy tất cả các order
 router.get('/', async(req, res) => {
     const orderList = await Order.find().populate('user', 'name');
     if(!orderList) {
@@ -18,6 +20,7 @@ router.get('/', async(req, res) => {
     res.status(200).send(orderList);
 })
 
+//lấy 1 order
 router.get(`/:id`, catchasyncerror(async(req, res, next) => {
     const order = await Order.findById(req.params.id)
     .populate('user', 'name')
@@ -28,7 +31,8 @@ router.get(`/:id`, catchasyncerror(async(req, res, next) => {
     res.status(200).send(order);
 }))
 
-router.post(`/` ,catchasyncerror( async (req, res, next) =>{
+// booking 
+router.post(`/` , isAuthenticatedUser ,catchasyncerror( async (req, res, next) =>{
     
         const orderItemsIds = Promise.all(req.body.orderItems.map(async (orderItem) =>{
             let newOrderItem = new OrderItem({
@@ -68,8 +72,8 @@ router.post(`/` ,catchasyncerror( async (req, res, next) =>{
     
 }))
 
-
-router.put('/:id',catchasyncerror(async (req, res)=> {
+// cập nhật tình trạng order
+router.put('/:id', isAuthenticatedUser, catchasyncerror(async (req, res, next)=> {
     const order = await Order.findByIdAndUpdate(
         req.params.id,
         {
@@ -84,8 +88,8 @@ router.put('/:id',catchasyncerror(async (req, res)=> {
     res.send(order);
 }))
 
-
-router.delete('/:id', catchasyncerror((req, res)=>{
+// xóa 1 order 
+router.delete('/:id', isAuthenticatedUser ,catchasyncerror((req, res, next)=>{
     Order.findByIdAndRemove(req.params.id).then(async order =>{
         if(order) {
             await order.orderItems.map(async orderItem => {
@@ -100,6 +104,7 @@ router.delete('/:id', catchasyncerror((req, res)=>{
     })
 }))
 
+// tính tổng tất cả order
 router.get('/get/totalsales',catchasyncerror( async (req, res)=> {
     const totalSales= await Order.aggregate([
         { $group: { _id: null , totalsales : { $sum : '$totalPrice'}}}
@@ -112,6 +117,7 @@ router.get('/get/totalsales',catchasyncerror( async (req, res)=> {
     res.send({totalsales: totalSales.pop().totalsales})
 }))
 
+// 
 router.get(`/get/count`, catchasyncerror(async (req, res) =>{
     const orderCount = await Order.countDocuments()
 
@@ -123,6 +129,7 @@ router.get(`/get/count`, catchasyncerror(async (req, res) =>{
     });
 }))
 
+// my order
 router.get(`/get/userorders/:userid`, catchasyncerror(async (req, res) =>{
     const userOrderList = await Order.find({user: req.params.userid}).populate({ 
         path: 'orderItems', populate: {
