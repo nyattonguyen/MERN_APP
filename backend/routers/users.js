@@ -54,7 +54,6 @@ router.post('/login', catchAsyncError(async (req, res,next) => {
     }
     
     const isMatchPassworded = await bcrypt.compareSync(req.body.password, user.passwordHash)
-    console.log(isMatchPassworded)
     if(!isMatchPassworded) return next(new ErrorHandler("Password or username wrong!!",404))
      sendToken(user, 200, res)
 }))  

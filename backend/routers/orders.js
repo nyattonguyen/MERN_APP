@@ -8,7 +8,9 @@ const router = express.Router();
 const mongoose = require('mongoose');
 const catchasyncerror = require('../middleware/catchasyncerror');
 const ErrorHandler = require('../utils/errorHandler');
-const { isAuthenticatedUser } = require('../middleware/auth');
+const { isAuthenticatedUser, authorizeRoles } = require('../middleware/auth');
+const { User } = require('../models/user');
+const { response } = require('express');
 
 
 // lấy tất cả các order
@@ -73,23 +75,30 @@ router.post(`/` , isAuthenticatedUser ,catchasyncerror( async (req, res, next) =
 }))
 
 // cập nhật tình trạng order
-router.put('/:id', isAuthenticatedUser, catchasyncerror(async (req, res, next)=> {
+router.put('/:id',isAuthenticatedUser , authorizeRoles() , catchasyncerror(async (req, res, next) => {
+
+    // res.send("Hello")
+
     const order = await Order.findByIdAndUpdate(
         req.params.id,
         {
             status: req.body.status
         },
-        { new: true}
+        { new: true, runValidators: true}
     )
 
     if(!order)
     return res.status(400).send('the order cannot be update!')
 
-    res.send(order);
+    res.status(200).json({
+        order,
+        success: true
+    })     
 }))
 
 // xóa 1 order 
-router.delete('/:id', isAuthenticatedUser ,catchasyncerror((req, res, next)=>{
+router.delete('/:id', catchasyncerror((req, res, next)=>{
+    
     Order.findByIdAndRemove(req.params.id).then(async order =>{
         if(order) {
             await order.orderItems.map(async orderItem => {

@@ -8,7 +8,7 @@ const isAuthenticatedUser = catchAsyncErrors(async (req, res, next) => {
 
   const { token } = req.cookies;
 
-  console.log('token', token);
+  // console.log('token', token);
   if (!token) {
     return next(new ErrorHandler('Vui lòng đăng nhập để booking', 401));
   }
@@ -23,13 +23,16 @@ const isAuthenticatedUser = catchAsyncErrors(async (req, res, next) => {
   next();
 });
 
-const authorizeRoles = (...isAdmin) => {
+const authorizeRoles = () => {
   return (req, res, next) => {
-    if (!isAdmin) {
-      next(new ErrorHandler(`Role ${req.user.isAdmin} is not allowed`));
+    // console.log("req usser", req.user)
+    if (req.user.isAdmin !== true) {
+      return next(new ErrorHandler(`Role  is not allowed`));
     }
-    next();
+
+  next();
   };
 };
+
 
 module.exports = { isAuthenticatedUser, authorizeRoles };
