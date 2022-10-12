@@ -7,6 +7,7 @@ const jwt = require('jsonwebtoken');
 const sendToken = require('../utils/jwtToken')
 const ErrorHandler = require('../utils/errorHandler');
 const catchAsyncError = require('../middleware/catchAsyncError');
+const e = require('express');
 
 
 
@@ -60,7 +61,7 @@ router.post('/login', catchAsyncError(async (req, res,next) => {
 
 
 router.post('/register', async (req,res)=>{
-    let user = new User({
+    let user = new User({ 
         name: req.body.name,
         email: req.body.email,
         passwordHash: bcrypt.hashSync(req.body.password, 10),
@@ -69,14 +70,19 @@ router.post('/register', async (req,res)=>{
         city:req.body.city,
         phone:req.body.phone,
         isAdmin: req.body.isAdmin
-    })
+    }) 
+   
     user = await user.save();
 
     if(!user)
-    return res.status(400).send('the user cannot be register!')
+    return res.status(400).send('the user cannot be created!')
 
-    res.send(user);
+    res.status(200).json({
+        user,
+        success: true
+    })   
 })
+
 router.get(`/get/count`, async (req, res) =>{
     const userCount = await User.countDocuments({count : count})
 

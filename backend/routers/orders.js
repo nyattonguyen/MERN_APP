@@ -97,7 +97,7 @@ router.put('/:id',isAuthenticatedUser , authorizeRoles() , catchasyncerror(async
 }))
 
 // xóa 1 order 
-router.delete('/:id', catchasyncerror((req, res, next)=>{
+router.delete('/:id',authorizeRoles(), catchasyncerror((req, res, next)=>{
     
     Order.findByIdAndRemove(req.params.id).then(async order =>{
         if(order) {
@@ -139,17 +139,68 @@ router.get(`/get/count`, catchasyncerror(async (req, res) =>{
 }))
 
 // my order
-router.get(`/get/userorders/:userid`, catchasyncerror(async (req, res) =>{
+router.get(`/get/userorders/:userid`, async (req, res) =>{
     const userOrderList = await Order.find({user: req.params.userid}).populate({ 
         path: 'orderItems', populate: {
             path : 'product', populate: 'category'} 
-        }).sort({'date': -1});
+        });
 
     if(!userOrderList) {
         res.status(500).json({success: false})
     } 
     res.send(userOrderList);
+})
+//user lay danh sach order co nv dang hoat dong(action)
+router.get(`/get/userorderactive/:userid`, isAuthenticatedUser, catchasyncerror(async (req, res) =>{
+    
+    const action = await Order.where({'status':'dang hoat dong'})
+
+        if(!action) {
+            res.status(500).json({success: false})
+        } 
+        
+        res.status(200).json({
+            action,
+            success: true
+        }) 
+          
+    
+    
 }))
+
+// lay danh sach order da hoan thanh (history)
+router.get(`/get/userorderfinished/:userid`, isAuthenticatedUser, catchasyncerror(async (req, res) =>{
+    
+    const finished = await Order.where({'status':'hoan thanh'});
+
+        if(!finished) {
+            res.status(500).json({success: false})
+        } 
+        
+        res.status(200).json({
+            finished,
+            success: true
+        }) 
+          
+    
+    
+}))
+
+//user update 1 cong viec hoan thanh
+router.put(`/get/checkorder/:orderid`,isAuthenticatedUser, catchasyncerror(async (req, res, next) => {
+    const action = await Order.findById( req.params.orderid )
+
+    if(!action){
+        return next(new ErrorHandler('Not found', 404));        
+    }
+    action.status === 'dang hoat dong' ? action.status = 'hoan thanh' : action
+    await action.save();
+    res.status(200).json({
+        action,
+        success: true
+    })     
+}
+))
 
 
 module.exports =router;
