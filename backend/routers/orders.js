@@ -14,7 +14,7 @@ const { response } = require('express');
 
 
 // lấy tất cả các order
-router.get('/', async(req, res) => {
+router.get('/', authorizeRoles(),async(req, res) => {
     const orderList = await Order.find().populate('user', 'name');
     if(!orderList) {
         res.status(500).json({message: false})
@@ -74,26 +74,20 @@ router.post(`/` , isAuthenticatedUser ,catchasyncerror( async (req, res, next) =
     
 }))
 
-// cập nhật tình trạng order
-router.put('/:id',isAuthenticatedUser , authorizeRoles() , catchasyncerror(async (req, res, next) => {
+// cập nhật tình trạng order (-> dang hoat dong)
+router.put('/:orderid',isAuthenticatedUser , authorizeRoles() , catchasyncerror(async (req, res, next) => {
 
     // res.send("Hello")
-
-    const order = await Order.findByIdAndUpdate(
-        req.params.id,
-        {
-            status: req.body.status
-        },
-        { new: true, runValidators: true}
-    )
-
-    if(!order)
-    return res.status(400).send('the order cannot be update!')
-
+    const order = await Order.findById( req.params.orderid )
+    if(!order){
+        return next(new ErrorHandler('Not found', 404));        
+    }
+    order.status === 'Chờ xác nhận' ? order.status = 'Đang hoạt động' : order
+    await order.save();
     res.status(200).json({
         order,
         success: true
-    })     
+    })  
 }))
 
 // xóa 1 order 
@@ -113,8 +107,8 @@ router.delete('/:id',authorizeRoles(), catchasyncerror((req, res, next)=>{
     })
 }))
 
-// tính tổng tất cả order
-router.get('/get/totalsales',catchasyncerror( async (req, res)=> {
+// Admin tính tổng tất cả order
+router.get('/get/totalsales', authorizeRoles(),catchasyncerror( async (req, res)=> {
     const totalSales= await Order.aggregate([
         { $group: { _id: null , totalsales : { $sum : '$totalPrice'}}}
     ])
@@ -153,7 +147,7 @@ router.get(`/get/userorders/:userid`, async (req, res) =>{
 //user lay danh sach order co nv dang hoat dong(action)
 router.get(`/get/userorderactive/:userid`, isAuthenticatedUser, catchasyncerror(async (req, res) =>{
     
-    const action = await Order.where({'status':'dang hoat dong'})
+    const action = await Order.where({'status':'Đang hoạt động'})
 
         if(!action) {
             res.status(500).json({success: false})
@@ -171,7 +165,7 @@ router.get(`/get/userorderactive/:userid`, isAuthenticatedUser, catchasyncerror(
 // lay danh sach order da hoan thanh (history)
 router.get(`/get/userorderfinished/:userid`, isAuthenticatedUser, catchasyncerror(async (req, res) =>{
     
-    const finished = await Order.where({'status':'hoan thanh'});
+    const finished = await Order.where({'status':'Hoàn thành'});
 
         if(!finished) {
             res.status(500).json({success: false})
@@ -193,7 +187,7 @@ router.put(`/get/checkorder/:orderid`,isAuthenticatedUser, catchasyncerror(async
     if(!action){
         return next(new ErrorHandler('Not found', 404));        
     }
-    action.status === 'dang hoat dong' ? action.status = 'hoan thanh' : action
+    action.status === 'Đang hoạt động' ? action.status = 'Hoàn thành' : action
     await action.save();
     res.status(200).json({
         action,
